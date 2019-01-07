@@ -15,7 +15,7 @@ module VagrantPlugins
 		end
 
 		def fetch_ip(vzctlid)
-		  run(:vzlist,"-a","-H","-t","-o","ip","#{vzctlid}")
+		  run(:vzlist,"-a","-H","-o","ip","#{vzctlid}")
 		end
 
 		def fetch_ip_netadapter(vzctlid,netadapter)
@@ -26,7 +26,7 @@ module VagrantPlugins
 
 		  # run :rsync, settings[:box_location],settings[:template_location] 
 
-		  run :vzctl, 'create', vzctlid, '--ostemplate', settings[:template_name]
+		  run :prlctl, 'create', vzctlid, '--config', settings[:template_name], '--vmtype', 'ct'
 
 		  settings.delete(:box_location)
 		  settings.delete(:template_location)
@@ -58,7 +58,7 @@ module VagrantPlugins
 		end
 
 		def status(vzctlid)
-		  if @name && run(:vzctl, 'status', "#{vzctlid}") =~ /[a-z]+\s[0-9]+\s([a-z]+)\s([a-z]+)\s([a-z]+)/i
+		  if @name && run(:vzctl, 'status', "#{vzctlid}") =~ /^[a-z]+\s.*\s([a-z]+)\s([a-z]+)\s([a-z]+)$/i
 			status = "#{$1}_#{$2}_#{$3}".downcase.to_sym
 			status
 		  elsif @name
@@ -70,11 +70,12 @@ module VagrantPlugins
           run :mount, "-o", "bind", "#{source}", "#{destination}"
 		end
 
+
 		private
 
+
 		def add_vagrant_user(vzctlid,pubkey)
-		  run :vzctl, "exec",  "#{vzctlid}", "if [[ ! \`grep vagrant /etc/passwd\` ]]; then adduser vagrant; fi"
-		  run :vzctl, "exec",  "#{vzctlid}", "echo 'vagrant:vagrant' | chpasswd"
+		  run :vzctl, "exec",  "#{vzctlid}", "if [[ ! \`grep vagrant /etc/passwd\` ]]; then adduser --disabled-password --gecos 'vagrant test' vagrant; fi"
 		  run :vzctl, "exec",  "#{vzctlid}", "mkdir -p /home/vagrant/.ssh" 
 		  run :vzctl, "exec",  "#{vzctlid}", "echo '#{pubkey}' > /home/vagrant/.ssh/authorized_keys"
 		  run :vzctl, "exec",  "#{vzctlid}", "chown -R vagrant:vagrant /home/vagrant/.ssh"

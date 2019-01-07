@@ -10,7 +10,7 @@ module VagrantPlugins
 		  config = env[:machine].provider_config
           box = env[:machine].box
 
-          container_name = "vz#{config.vzctid}"
+          container_name = config.hostname
         
 		  settings={}
 		  settings.merge!(:physpages => config.physpages)
